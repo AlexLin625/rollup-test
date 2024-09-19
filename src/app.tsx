@@ -1,7 +1,25 @@
 import { h, tag, signal, Component, effect } from "omi";
 import { tailwind } from "./tailwind";
 import { MonacoEditor } from "./monaco";
-import { Modules, transformModules } from "./codeWrapper";
+import { ModuleConfig, Modules, transformModules } from "./codeWrapper";
+
+const moduleConfig: ModuleConfig[] = [
+    {
+        name: "omi",
+        url: "https://cdnjs.cloudflare.com/ajax/libs/omi/7.7.0/omi.module.js",
+        exports: ["h", "tag", "Component", "render", "define", "signal"],
+    },
+    {
+        name: "core-js",
+        url: "https://cdnjs.cloudflare.com/ajax/libs/core-js/3.38.1/minified.js",
+        exports: ["weakmap-polyfill"],
+    },
+    {
+        name: "reactive-signal",
+        url: "/libs/reactive-signal.module.js",
+        exports: ["signal", "setActiveComponent", "getActiveComponent"],
+    },
+];
 
 @tag("my-app")
 export default class extends Component {
@@ -14,16 +32,7 @@ export default class extends Component {
     constructor() {
         super();
         this.modules = new Modules();
-        this.fetchOmi();
-    }
-
-    fetchOmi() {
-        fetch("https://cdnjs.cloudflare.com/ajax/libs/omi/7.7.0/omi.module.js")
-        .then((res) => res.text())
-        .then((res) => {
-            console.log("Omi fetched")
-            this.modules.setSource("omi", res);
-        });
+        this.modules.modules = moduleConfig;
     }
 
     compile(source: string) {
@@ -44,6 +53,7 @@ export default class extends Component {
                     <iframe
                         src="./preview.html"
                         ref={(e) => (this.frame = e)}
+                        class="w-full h-full"
                     ></iframe>
                 </div>
                 <MonacoEditor
