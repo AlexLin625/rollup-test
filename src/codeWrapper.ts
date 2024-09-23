@@ -12,8 +12,8 @@ const tsxTransformConfig = {
         [
             availablePresets["react"],
             {
-                pragma: "h",
-                pragmaFrag: "h.f",
+                pragma: "Omi.h",
+                pragmaFrag: "Omi.h.f",
             },
         ],
         availablePresets["typescript"],
@@ -82,27 +82,27 @@ export class Modules {
     }
 
     // @ts-ignore
+    // load 方法
     load = (id) => {
         console.log("load", id);
         if (this.code.hasOwnProperty(id)) return this.code[id];
         return null;
     };
-
+  
     // @ts-ignore
     resolveId = (id) => {
-        console.log("queryed", id);
-        // console.log(this.code);
+        console.log("queried", id);
         if (this.code.hasOwnProperty(id)) {
-            console.log("resolved", id);
-            return id;
+          console.log("resolved", id);
+          return id;
         }
         if (this.resolveTargets.hasOwnProperty(id)) {
-            console.log("resolved", id, "=>", this.resolveTargets[id]);
-            return this.resolveTargets[id];
+          console.log("resolved", id, "=>", this.resolveTargets[id]);
+          return this.resolveTargets[id];
         }
-        return "";
-    };
-
+        return null; // 返回 null 而不是空字符串
+      };
+      
     setSource(id: string, code: string) {
         this.code[id] = code;
     }
@@ -118,17 +118,23 @@ export async function transformModules(modules: Modules) {
     // 先用Babel转换ts/tsx为js模块.
     let transformedCode = (() => modules)();
     for (let name in modules.code) {
-        // if (!name.endsWith(".tsx")) continue;
         const code = modules.code[name];
-
-        const res = transform(code, {
+        let res;
+    
+        // 仅对您的应用代码进行转译
+        if (name === "main.tsx") {
+          res = transform(code, {
             filename: name,
             presets: tsxTransformConfig.presets,
             plugins: tsxTransformConfig.plugins,
-        })?.code;
+          })?.code;
+        } else {
+          // 不转译第三方库
+          res = code;
+        }
+    
         if (res) transformedCode.setSource(name, res);
-    }
-
+      }
     // return transformedCode.code["main.tsx"];
 
     transformedCode.buildResolveTargets();
@@ -137,6 +143,7 @@ export async function transformModules(modules: Modules) {
     const rollupInputConfig: InputOptions = {
         input: "main.tsx",
         treeshake: false,
+        external: ["Omi"],
 
         plugins: [transformedCode],
     };
@@ -145,9 +152,16 @@ export async function transformModules(modules: Modules) {
         format: "iife",
         file: "output.js",
         esModule: false,
+        name: "MyBundle",
+        globals: {
+            'omi': 'Omi',
+        },
     };
-
+    
     const bundle = await rollup(rollupInputConfig);
     const { output } = await bundle.generate(rollupOutputConfig);
+    // 输出打包结果以进行检查
+    console.log("Bundled Code:", output[0].code);
+
     return output[0].code;
 }
