@@ -12,8 +12,8 @@ const tsxTransformConfig = {
         [
             availablePresets["react"],
             {
-                pragma: "Omi.h",
-                pragmaFrag: "Omi.h.f",
+                pragma: "h",
+                pragmaFrag: "h.f",
             },
         ],
         availablePresets["typescript"],
@@ -27,7 +27,7 @@ const tsxTransformConfig = {
     plugins: [
         [
             availablePlugins["proposal-decorators"],
-            { decoratorsBeforeExport: true },
+            { version: "2023-05" },
         ],
     ],
 };
@@ -91,7 +91,7 @@ export class Modules {
     // @ts-ignore
     resolveId = (id) => {
         console.log("queryed", id);
-        console.log(this.code);
+        // console.log(this.code);
         if (this.code.hasOwnProperty(id)) {
             console.log("resolved", id);
             return id;
@@ -118,6 +118,7 @@ export async function transformModules(modules: Modules) {
     // 先用Babel转换ts/tsx为js模块.
     let transformedCode = (() => modules)();
     for (let name in modules.code) {
+        // if (!name.endsWith(".tsx")) continue;
         const code = modules.code[name];
 
         const res = transform(code, {
@@ -128,18 +129,22 @@ export async function transformModules(modules: Modules) {
         if (res) transformedCode.setSource(name, res);
     }
 
+    // return transformedCode.code["main.tsx"];
+
     transformedCode.buildResolveTargets();
-    console.log(transformedCode);
+    // console.log(transformedCode);
 
     const rollupInputConfig: InputOptions = {
         input: "main.tsx",
+        treeshake: false,
+
         plugins: [transformedCode],
     };
 
     const rollupOutputConfig: OutputOptions = {
         format: "iife",
         file: "output.js",
-        esModule: true,
+        esModule: false,
     };
 
     const bundle = await rollup(rollupInputConfig);

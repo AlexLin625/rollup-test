@@ -7,7 +7,16 @@ const moduleConfig: ModuleConfig[] = [
     {
         name: "omi",
         url: "https://cdnjs.cloudflare.com/ajax/libs/omi/7.7.0/omi.module.js",
-        exports: ["h", "tag", "Component", "render", "define", "signal"],
+        exports: [
+            "h",
+            "h.f",
+            "tag",
+            "Component",
+            "render",
+            "define",
+            "signal",
+            "Omi",
+        ],
     },
     {
         name: "core-js",
@@ -29,6 +38,8 @@ export default class extends Component {
     frame: HTMLIFrameElement | undefined;
     modules: Modules;
 
+    isCompiling = false;
+
     constructor() {
         super();
         this.modules = new Modules();
@@ -37,13 +48,20 @@ export default class extends Component {
 
     compile(source: string) {
         this.modules.setSource("main.tsx", source);
+        if (this.isCompiling) return;
+
+        this.isCompiling = true;
         transformModules(this.modules).then((res) => {
             window._iframeSourceCode = res;
-        });
+            this.isCompiling = false;
 
-        if (this.frame) {
-            this.frame.contentWindow?.location.reload();
-        }
+            if (this.frame) {
+                this.frame.contentWindow?.location.reload();
+            }
+        }).catch((e) => {
+            console.error(e);
+            this.isCompiling = false;
+        });
     }
 
     render() {
