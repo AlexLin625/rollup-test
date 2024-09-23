@@ -7,9 +7,11 @@ const moduleConfig: ModuleConfig[] = [
     {
         name: "omi",
         url: "https://cdnjs.cloudflare.com/ajax/libs/omi/7.7.0/omi.module.js",
+        // url: "https://unpkg.com/omi@latest/dist/omi.esm.js", // 太先进了，rollup解析报错
+
         exports: [
             "h",
-            "h.f",
+            // "h.f",
             "tag",
             "Component",
             "render",
@@ -54,8 +56,9 @@ export default class extends Component {
         transformModules(this.modules).then((res) => {
             window._iframeSourceCode = res;
             this.isCompiling = false;
-
+            
             if (this.frame) {
+                console.log("this.iframe reload ",this.frame)
                 this.frame.contentWindow?.location.reload();
             }
         }).catch((e) => {

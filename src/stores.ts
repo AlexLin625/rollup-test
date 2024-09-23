@@ -1,5 +1,5 @@
 export const initExampleCode = `
-import { tag, Component, h, render, signal } from 'omi'
+import { render,tag, h , signal , Component} from 'omi';
 
 const count = signal(0)
 
