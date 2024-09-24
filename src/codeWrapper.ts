@@ -12,8 +12,8 @@ const tsxTransformConfig = {
         [
             availablePresets["react"],
             {
-                pragma: "h",
-                pragmaFrag: "h.f",
+                pragma: "window.Omi.h",
+                pragmaFrag: "window.Omi.h.f",
             },
         ],
         availablePresets["typescript"],
@@ -25,16 +25,8 @@ const tsxTransformConfig = {
         ],
     ],
     plugins: [
-        [
-            availablePlugins["proposal-decorators"],
-            { version: "2023-05" },
-        ],
+        [availablePlugins["proposal-decorators"], { version: "2023-05" }],
     ],
-};
-
-const tsTransformConfig = {
-    presets: [availablePresets["typescript"], availablePresets["env"]],
-    modules: targetType,
 };
 
 export interface ModuleConfig {
@@ -50,26 +42,8 @@ export class Modules {
     modules: ModuleConfig[] = [];
     resolveTargets: Record<string, string> = {};
 
-    isDepFetched = false;
-
     constructor() {
         this.code = {};
-    }
-
-    async fetchDeps() {
-        let fetchPromises = [];
-        for (let module of this.modules) {
-            fetchPromises.push(
-                fetch(module.url)
-                    .then((res) => res.text())
-                    .then((code) => {
-                        console.log("fetched", module.name);
-                        this.code[module.name] = code;
-                    }),
-            );
-        }
-        await Promise.all(fetchPromises);
-        this.isDepFetched = true;
     }
 
     buildResolveTargets() {
@@ -113,12 +87,9 @@ export class Modules {
 }
 
 export async function transformModules(modules: Modules) {
-    if (!modules.isDepFetched) await modules.fetchDeps();
-
     // 先用Babel转换ts/tsx为js模块.
     let transformedCode = (() => modules)();
     for (let name in modules.code) {
-        // if (!name.endsWith(".tsx")) continue;
         const code = modules.code[name];
 
         const res = transform(code, {
@@ -129,25 +100,27 @@ export async function transformModules(modules: Modules) {
         if (res) transformedCode.setSource(name, res);
     }
 
-    // return transformedCode.code["main.tsx"];
-
     transformedCode.buildResolveTargets();
-    // console.log(transformedCode);
 
     const rollupInputConfig: InputOptions = {
         input: "main.tsx",
         treeshake: false,
 
         plugins: [transformedCode],
+        external: ["omi", "omi-router", "core-js"],
     };
 
     const rollupOutputConfig: OutputOptions = {
         format: "iife",
         file: "output.js",
         esModule: false,
+        globals: {
+            omi: "Omi",
+        },
     };
 
     const bundle = await rollup(rollupInputConfig);
     const { output } = await bundle.generate(rollupOutputConfig);
+    console.log(output[0].code)
     return output[0].code;
 }

@@ -1,18 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+    <head lang="en">
+        <meta charset="UTF-8" />
+        <title></title>
+    </head>
 
-<head lang="en">
-  <meta charset="UTF-8" />
-  <title></title>
-</head>
-
-<body style="margin: 0;">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.7/require.min.js" integrity="sha512-J5ha2LF4Le+PBQnI5+xAVJDR+sZG9uSgroy4n/A6TLjNkvYQbqZA8WHZdaOvJ0HiKkBC9Frmvs10rFDSHKmveQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script>
-    var script = document.createElement("script");
-    script.innerHTML = parent._iframeSourceCode;
-    document.body.appendChild(script);
-  </script>
-</body>
-
+    <body style="margin: 0">
+        <script src="/require.min.js"></script>
+        <script>
+            require(["/omi.umd.js"], (Omi) => {
+                window.Omi = Omi;
+                var script = document.createElement("script");
+                script.innerHTML = parent._iframeSourceCode;
+                document.body.appendChild(script);
+            });
+        </script>
+    </body>
 </html>
